@@ -174,6 +174,13 @@ public class UpdBankOp extends ExtendM3Transaction {
 
     // Bank operation
     bopc = mi.inData.get("BOPC") == null ? "" : mi.inData.get("BOPC").trim()
+    if (bopc != "") {
+      // Validate input value "Bank operation"
+      if (!isValidSysTabVal(cono, "", "BOPC", bopc, "")) {
+        mi.error("Bank operation ${bopc} does not exist")
+        return false
+      }
+    }
 
     // Store input parameters in <parameters> hashmap
     parameters.put("CONO", cono)
@@ -244,4 +251,30 @@ public class UpdBankOp extends ExtendM3Transaction {
     return result
   }
 
+  /**
+   * Validate if the input "Bank operation" (CRS079) exists in CSYTAB within the given M3 company
+   *
+   *  @param  company     Company
+   *  @param  division    Division
+   *  @param  constantVal Constant value
+   *  @param  keyVal      Key value
+   *  @param  language    Language
+   *  @return      true if Bank operation was found in CSYTAB, false if not
+   **/
+  private boolean isValidSysTabVal(String company, String division, String constantVal, String keyVal, String language){
+    DBAction query = database.table("CSYTAB").index("00").build()
+    DBContainer container = query.createContainer()
+
+    container.set("CTCONO", Integer.parseInt(company))
+    container.set("CTDIVI", division)
+    container.set("CTSTCO", constantVal)
+    container.set("CTSTKY", keyVal)
+    container.set("CTLNCD", language)
+
+    if(query.read(container)) {
+      return true
+    } else {
+      return false
+    }
+  }
 }
